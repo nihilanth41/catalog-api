@@ -136,13 +136,22 @@ class NormalizedCallNumber(object):
         if not re.search(r'-', stem):
             stem = '{}-0'.format(stem)
 
-        # For suffixes: years (which, pre-2000, left off the leading 1)
-        # sort first. Letters sort next. Non-year numbers sort third.
-        # So to force sorting first, we add a period to the beginning
-        # of years. (Letters are taken care of below.)
+        # For suffixes: The general rule quoted by the Federal
+        # Depository Library Program is that years (which, pre-2000),
+        # left off the lead 1) sort first. Letters sort next. Non-year
+        # numbers sort third. However, many series use numbers after
+        # the colon in a range like 1-3000, where the 3-digit numbers
+        # and numbers in the 2000s aren't years. Ex: in the sudoc
+        # A 1.9:900, 900 is not the year 1900, it's the number 900.
+        # In our collection, numbers that immediately follow the colon
+        # always sort as numbers, not years. BUT -- numbers after the
+        # colon that follow a slash and are in 800-2XXX range are
+        # usually years. In these instances, to force sorting first,
+        # we add a period to the beginning of years, and we add the 1
+        # onto pre-2000 years.
         suffix = re.sub(r'\.(\d)', r' \1', suffix)
-        suffix = re.sub(r'(^|\D)(9\d\d)($|\D)', r'\1.\2\3', suffix)
-        suffix = re.sub(r'(^|\D)(2\d\d\d)($|\D)', r'\1.\2\3', suffix)
+        suffix = re.sub(r'(/)([8-9]\d\d)($|\D)', r'\1.1\2\3', suffix)
+        suffix = re.sub(r'(/)(2\d\d\d)($|\D)', r'\1.\2\3', suffix)
 
         # Now we reattach the stem and the suffix and process the whole
         # thing as a string. We want numbers--but not numbers after
